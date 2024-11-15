@@ -24,7 +24,7 @@ builder.Services.AddJwtServices(builder.Configuration);
 builder.Services.AddSwaggerServices();
 builder.Services.AddOdataServices();
 builder.Services.AddEndpointsApiExplorer();
-
+// test
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
