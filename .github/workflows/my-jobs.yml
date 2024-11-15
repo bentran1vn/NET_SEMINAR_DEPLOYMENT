@@ -14,7 +14,8 @@ jobs:
         env:
           APPSETTINGS: ${{ secrets.APP_SETTINGS }}
         run: |
-          echo "$APPSETTINGS" > SuperProjectPE.API/appsettings.json
+          echo '${{ secrets.APP_SETTINGS }}' > SuperProjectPE.API/appsettings.json
+          cat SuperProjectPE.API/appsettings.json
 
       - name: Build Docker Image
         run: docker build -t super_project:latest -f SuperProjectPE.API/Dockerfile .
@@ -24,15 +25,16 @@ jobs:
     runs-on: [self-hosted]
     env:
       CONTAINER_NAME: myappContainer
-      APPSETTINGS: ${{ secrets.APP_SETTINGS }}
+      # CHANGE: Remove APPSETTINGS from env since we're using it directly
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Prepare Configuration
         run: |
-          echo "$APPSETTINGS" > appsettings.json
+          echo '${{ secrets.APP_SETTINGS }}' > appsettings.json
+          cat appsettings.json
 
       - name: Deploy to Server
         run: |
@@ -59,7 +61,8 @@ jobs:
           docker run -d \
             -p 4000:8080 \
             --name $CNAME \
-            -v "$(pwd)/appsettings.json:/app/appsettings.json" \
+            # CHANGE: Add :ro for read-only mount
+            -v "$(pwd)/appsettings.json:/app/appsettings.json:ro" \
             super_project:latest
 
       - name: Notify Deployment
