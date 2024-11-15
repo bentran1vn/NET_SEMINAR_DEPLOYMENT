@@ -1,0 +1,66 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: [ self-hosted ]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Write appsettings.json
+        env:
+          APPSETTINGS: ${{ secrets.APP_SETTINGS }}
+        run: |
+          echo "$APPSETTINGS" > SuperProjectPE.API/appsettings.json
+
+      - name: Build Docker Image
+        run: docker build -t superProject:latest -f SuperProjectPE.API/Dockerfile .
+  
+  deploy:
+    needs: build
+    runs-on: [self-hosted]
+    env:
+      CONTAINER_NAME: myappContainer
+      APPSETTINGS: ${{ secrets.APP_SETTINGS }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Prepare Configuration
+        run: |
+          echo "$APPSETTINGS" > appsettings.json
+
+      - name: Deploy to Server
+        run: |
+          CNAME=${{ env.CONTAINER_NAME }}
+          # Check if the container exists
+          if [ "$(docker ps -aq -f name=$CNAME)" ]; then
+              if [ "$(docker ps -aq -f status=exited -f name=$CNAME)" ]; then
+                  echo ":: Container $CNAME exists and is exited"
+                  echo ":: Removing exited container - $CNAME"
+                  docker rm $CNAME
+              else
+                  echo ":: Container $CNAME exists and is running"
+                  echo ":: Stopping running container - $CNAME"
+                  docker stop $CNAME
+                  echo ":: Removing stopped container - $CNAME"
+                  docker rm $CNAME
+              fi
+          else
+              echo ":: No existing container named $CNAME"
+          fi
+          
+          # Run new container with mounted appsettings.json
+          echo ":: Running new container - $CNAME"
+          docker run -d \
+            -p 4000:8080 \
+            --name $CNAME \
+            -v "$(pwd)/appsettings.json:/app/appsettings.json" \
+            superProject:latest
+
+      - name: Notify Deployment
+        run: echo "Deployment completed successfully!"
