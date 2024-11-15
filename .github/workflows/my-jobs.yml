@@ -17,7 +17,7 @@ jobs:
           echo "$APPSETTINGS" > SuperProjectPE.API/appsettings.json
 
       - name: Build Docker Image
-        run: docker build -t superProject:latest -f SuperProjectPE.API/Dockerfile .
+        run: docker build -t super_project:latest -f SuperProjectPE.API/Dockerfile .
   
   deploy:
     needs: build
@@ -60,7 +60,7 @@ jobs:
             -p 4000:8080 \
             --name $CNAME \
             -v "$(pwd)/appsettings.json:/app/appsettings.json" \
-            superProject:latest
+            super_project:latest
 
       - name: Notify Deployment
         run: echo "Deployment completed successfully!"
